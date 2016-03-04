@@ -1,0 +1,30 @@
+/* CSS declarations go here */
+.hidden_div {
+	display:none;
+}
+
+.margintop_5px {
+    margin-top: 5px;
+}
+
+.hide_overflow {
+    overflow: hidden;
+}
+
+.row {
+    padding-top: 10px;
+    margin: 10px;
+}
+
+.row-content {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.mypanel {
+    height: 250px;
+}
+
+.site_descp {
+    max-height: 60px;
+}

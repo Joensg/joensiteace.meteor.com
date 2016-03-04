@@ -1,0 +1,189 @@
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A social website aggregator using MeteorJS.">
+    <meta name="author" content="Joel Sequeira">
+    <title>siteace</title>
+</head>
+
+<body>
+</body>
+
+<template name="ApplicationLayout">
+    {{> yield "navbar"}}
+    {{> yield "main"}}
+</template>
+
+<template name="home">
+    <div class="container">
+        <div class="row">
+            {{> website_form}}
+        </div>
+        <div class="row">
+            {{> website_list}}
+        </div>
+	</div>
+</template>
+
+<template name="myLayout">
+    <div class="container">
+        {{> atForm}}
+	</div>
+</template>
+
+<template name="myLogin">
+    <div class="container">
+		{{> atForm}}
+	</div>
+</template>
+
+<template name="navbar">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-navbar" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">Site Ace</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="main-navbar">
+                <div class="navbar-text">
+                    <span class="glyphicon glyphicon-search"></span>
+                     Search: {{> EasySearch.Input index=websitesIndex}}
+                </div>
+                <div class="navbar-right">{{> atNavButton}}</div>
+            </div><!-- /.navbar-collapse -->
+        </div><!-- /.container-fluid -->
+    </nav>
+</template>
+
+<template name="website_form">
+    <a class="btn btn-primary js-toggle-website-form" href="#">
+        <i class="fa fa-plus fa-lg" aria-hidden="true"><span class="label">Post New Website</span></i>
+	</a>
+	<div id="website_form" class="hidden_div">
+        <form class="js-save-website-form">
+            <div class="form-group">
+                <label for="url">Site address</label>
+                <input type="text" class="form-control" id="url" placeholder="http://www.mysite.com" required>
+            </div>
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" class="form-control" id="title" placeholder="Mysite">
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <input type="text" class="form-control" id="description" placeholder="I found this site really useful for ..." required>
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+    </div>
+</template>
+
+<!-- template that displays several website items -->
+<template name="website_list">
+      {{#EasySearch.Each index=websitesIndex}}
+        <div class="result col-md-4">
+            {{>website_item}}
+        </div>
+      {{/EasySearch.Each}}
+    <div class="row text-center">
+        {{> EasySearch.Pagination index=websitesIndex maxPages=10}}
+    </div>
+</template>
+
+<!-- template that displays individual website entries -->
+<template name="website_item">
+        <div class="panel panel-default img-rounded mypanel hide_overflow">
+            <div class="panel-heading text-center text-capitalize">
+                <a href="{{url}}">{{title}}</a>
+            </div>
+            <div class="panel-body hide_overflow">
+                <div><small>Added by: <a href="#">{{getUser createdBy}}</a></small></div>
+                <div class="timeago"><small>Added on: {{formatdate createdOn}}, {{timeAgo createdOn}}</small></div>
+                <div class="row-content">
+                    <a href="#" class="btn btn-primary js-upvote margintop_5px">
+                        <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                        <span class="votes label">{{upvote}}</span>
+                    </a>
+                    <a href="#" class="btn btn-warning js-downvote margintop_5px">
+                        <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
+                        <span class="votes label">{{downvote}}</span>
+                    </a>
+                    <a href="/site/{{_id}}" class="btn btn-info more margintop_5px">
+                        <i class="fa fa-info-circle " aria-hidden="true"></i>
+                        <span class="label"> info</span>
+                    </a>
+                </div>
+                <div class="site_descp hide_overflow"><p class="text-justify">{{description}}</p></div>
+            </div>
+        </div>
+</template>
+
+<template name="site_detail">
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12">
+        <a class="btn btn-info" href="/"><i class="fa fa-hand-o-left fa-lg"></i> Back</a>
+        <h1><a class="text-justify text-capitalize" href="{{url}}">{{title}}</a></h1>
+        <a href="{{url}}">{{url}}</a>
+            <div class="row">
+                <div><small>Added by: <a href="#">{{getUser createdBy}}</a></small></div>
+                <div class="timeago"><small>Added on: {{formatdate createdOn}}, {{timeAgo createdOn}}</small></div>
+                <a href="#" class="btn btn-primary js-upvote">
+                    <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                    <span class="votes label">{{upvote}}</span>
+                </a>
+                <a href="#" class="btn btn-warning js-downvote">
+                    <i class="fa fa-thumbs-o-down" aria-hidden="true"></i>
+                    <span class="votes label">{{downvote}}</span>
+                </a>
+            </div>
+        <p class="text-justify">{{description}}</p>
+        <h2>Comments:</h2>
+        {{> comment_form}}
+        {{> comment_list}}
+            </div>
+        </div>
+    </div>
+</template>
+
+<template name="comment_list">
+    <div class="container">
+        <div class="row">
+            <ul id="comment_list">
+                {{#each comments}}
+                <div class="panel panel-default">
+                    <div class="panel-heading col-md-12">
+                        <div class="col-md-9">Comment by: <a href="#">{{getUser createdBy}}</a></div>
+                        <div class="timeago col-md-3"><small>Added on: {{formatdate createdOn}}, {{timeAgo createdOn}}</small></div>
+                    </div>
+                    <div class="panel-body">
+                        <p>{{comment}}</p>
+                    </div>
+                </div>
+                {{/each}}
+            </ul>
+        </div>
+    </div>
+</template>
+
+<template name="comment_form">
+    <div class="container">
+        <div class="row">
+            <form class="js-add-comment-form">
+                <div class="form-group">
+                    <label for="comment">Add Comment:</label>
+                    <textarea class="form-control" rows="5" id="comment"></textarea>
+                </div>
+                <button type="submit" class="btn btn-default">Submit</button>
+            </form>
+        </div>
+    </div>
+</template>
