@@ -1,23 +1,36 @@
+// code that is only sent to the client
+
+
+/////
+// Subscriptions
+/////
+// subscribe to read  website and comment data
 Meteor.subscribe('websites');
 Meteor.subscribe('comments');
 
+//subscribe to access the other users data
+Meteor.subscribe('allUsers');
+// end /Subscriptions
+
+
+/////
 // Routing
+/////
+// set up the iron router
 Router.configure({
     layoutTemplate: 'ApplicationLayout'
 });
 
-// Home
+// 'home' page
 Router.route('/', function() {
-    this.render('navbar', {
-    to:"navbar"
-  });
-    this.render('home', {
-        to: "main"
-    });
+    console.log("you hit / ");
+    this.render('navbar', {to:"navbar"});
+    this.render('home', {to: "main"});
 });
 
-// Site details
+// individual website details page
 Router.route('/site/:_id', function() {
+    console.log("you hit /site  "+this.params._id);
     this.render('site_detail', {
         to: "main",
         data: function() {
@@ -25,48 +38,12 @@ Router.route('/site/:_id', function() {
         }
     });
 });
+// end /Routing
 
-AccountsTemplates.configure({
-    defaultLayout: 'ApplicationLayout',
-});
-
-AccountsTemplates.configureRoute('signIn', {
-    name: 'signin',
-    path: '/login',
-    template: 'myLogin',
-    layoutTemplate: 'myLayout',
-    function(){
-        var user = Meteor.user();
-        if (user)
-          Router.go('/user/' + user._id);
-    }
-});
-
-var pwd = AccountsTemplates.removeField('password');
-AccountsTemplates.removeField('email');
-AccountsTemplates.addFields([
-  {
-      _id: "username",
-      type: "text",
-      displayName: "username",
-      required: true,
-      minLength: 4,
-  },
-  {
-      _id: 'email',
-      type: 'email',
-      required: true,
-      displayName: "email",
-      re: /.+@(.+){2,}\.(.+){2,}/,
-      errStr: 'Invalid email',
-  },
-  pwd
-]);
 
 /////
 // template helpers 
 /////
-
 Template.registerHelper('getUser', function(user_id){
     var user = Meteor.users.findOne({_id:user_id});
     if (user){
@@ -80,16 +57,18 @@ Template.registerHelper('getUser', function(user_id){
 // Get all comments
 Template.comment_list.helpers({
 	comments: function() {
-		return Comments.find({site: this._id}, {sort: {createdOn: -1}});
+		return Comments.find({siteid: this._id}, {sort: {createdOn: -1}});
 	}
 });
 
 // Format dates
-Template.registerHelper('timeAgo', function(date) {
+Template.registerHelper('timeAgo', function(createdOn) {
+    var date = new Date(createdOn);
     return moment(date).fromNow();
 });
 
-Template.registerHelper('formatdate', function(date) {
+Template.registerHelper('formatdate', function(createdOn) {
+    var date = new Date(createdOn);
     return date.toDateString();
 });
 
@@ -101,6 +80,8 @@ Template.navbar.helpers({
 Template.website_list.helpers({
     websitesIndex: () => WebsitesIndex
 });
+// end /template helpers
+
 
 /////
 // template events 
@@ -108,46 +89,12 @@ Template.website_list.helpers({
 
 Template.website_item.events({
     "click .js-upvote":function(event){
-        var website_id = this._id;
-        var upvote = this.upvote;
-        var upvoters = this.upvoters;
-        var downvote = this.downvote;
-        var downvoters = this.downvoters;
-        if(Meteor.user()){
-            if(this.upvoters==null || this.upvoters.indexOf(Meteor.user()._id) === -1){
-                Meteor.call('updateWebsiteDataup1', website_id, upvote, upvoters);
-                if(this.downvoters!==null && !(this.downvoters.indexOf(Meteor.user()._id) === -1)){
-                    Meteor.call('updateWebsiteDataup2', website_id, downvote, downvoters);
-                }
-            }
-            else {
-                alert("You have already upvoted! You may downvote to remove your upvote.");  
-            }
-            return true;
-        }
-        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
-        return false;// prevent the button from reloading the page
+        website = Websites.findOne({_id:this._id});
+        upvote(website);
     },
     "click .js-downvote":function(event){
-        var website_id = this._id;
-        var upvote = this.upvote;
-        var upvoters = this.upvoters;
-        var downvote = this.downvote;
-        var downvoters = this.downvoters;
-        if(Meteor.user()){
-            if(this.downvoters==null || this.downvoters.indexOf(Meteor.user()._id) === -1){
-                Meteor.call('updateWebsiteDataup3', website_id, downvote, downvoters);
-                if(this.upvoters!==null && !(this.upvoters.indexOf(Meteor.user()._id) === -1)){
-                    Meteor.call('updateWebsiteDataup4', website_id, upvote, upvoters);
-                }
-            }
-            else {
-                alert("You have already downvoted! You may upvote to remove your downvote.");  
-            }
-            return true;
-        }
-        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
-        return false;// prevent the button from reloading the page
+        website = Websites.findOne({_id:this._id});
+        downvote(website);
     }
 });
 
@@ -165,19 +112,18 @@ Template.website_form.events({
         });
     },
     "submit .js-save-website-form":function(event){
-        
-        // here is an example of how to get the url out of the form:
         event.preventDefault();
+        console.log("Post new website!");
+        // get the url out of the form
         var url = event.target.url.value;
-        console.log("The url they entered is: "+url);
+        console.log("The url they entered is: " + url);
         var title = event.target.title.value;
         var description = event.target.description.value;
         
-        //  put your website saving code in here!
-        if (Meteor.user()){
+        if (Meteor.user()){ //user is logged in
             Meteor.call('insertWebsiteData', url, title, description);
         }
-        else {
+        else { //user not logged in
             alert("Users can post new websites only if they are logged in. Kindly sign in or register!");
         }
         $("#website_form").toggle('slow');
@@ -190,26 +136,38 @@ Template.website_form.events({
 Template.site_detail.events({
     "submit .js-add-comment-form": function(event) {
         var comment = event.target.comment.value;
-        var site = this._id;
-        if (Meteor.user()){
-            Meteor.call('insertCommentsData', comment, site);
+        var siteid = this._id;
+        if (Meteor.user()){ //user logged in
+            Meteor.call('insertCommentsData', comment, siteid);
         }
-        else {
+        else { //user not logged in
             alert("Users can post new comments only if they are logged in. Kindly sign in or register!");
         }
         $(".js-add-comment-form textarea").val('');
         return false;// stop the form submit from reloading the page
     },
     "click .js-upvote":function(event){
-        var website_id = this._id;
-        var upvote = this.upvote;
-        var upvoters = this.upvoters;
-        var downvote = this.downvote;
-        var downvoters = this.downvoters;
+        website = Websites.findOne({_id:this._id});
+        upvote(website);
+    },
+    
+    "click .js-downvote":function(event){
+        website = Websites.findOne({_id:this._id});
+        downvote(website);
+    }
+});
+// end /template events
+
+function upvote(website) {
+    var website_id = website._id;
+        var upvote = website.upvote;
+        var upvoters = website.upvoters;
+        var downvote = website.downvote;
+        var downvoters = website.downvoters;
         if(Meteor.user()){
-            if(this.upvoters==null || this.upvoters.indexOf(Meteor.user()._id) === -1){
+            if(upvoters==null || upvoters.indexOf(Meteor.user()._id) === -1){
                 Meteor.call('updateWebsiteDataup1', website_id, upvote, upvoters);
-                if(this.downvoters!==null && !(this.downvoters.indexOf(Meteor.user()._id) === -1)){
+                if(downvoters!==null && !(downvoters.indexOf(Meteor.user()._id) === -1)){
                     Meteor.call('updateWebsiteDataup2', website_id, downvote, downvoters);
                 }
             }
@@ -220,27 +178,28 @@ Template.site_detail.events({
         }
         alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
         return false;// prevent the button from reloading the page
-    },
     
-    "click .js-downvote":function(event){
-        var website_id = this._id;
-        var upvote = this.upvote;
-        var upvoters = this.upvoters;
-        var downvote = this.downvote;
-        var downvoters = this.downvoters;
+}
+
+function downvote(website) {
+   var website_id = website._id;
+        var upvote = website.upvote;
+        var upvoters = website.upvoters;
+        var downvote = website.downvote;
+        var downvoters = website.downvoters;
         if(Meteor.user()){
-            if(this.downvoters==null || this.downvoters.indexOf(Meteor.user()._id) === -1){
+            if(downvoters==null || downvoters.indexOf(Meteor.user()._id) === -1){
                 Meteor.call('updateWebsiteDataup3', website_id, downvote, downvoters);
-                if(this.upvoters!==null && !(this.upvoters.indexOf(Meteor.user()._id) === -1)){
+                if(upvoters!==null && !(upvoters.indexOf(Meteor.user()._id) === -1)){
                     Meteor.call('updateWebsiteDataup4', website_id, upvote, upvoters);
                 }
             }
             else {
-                alert("You have already downvoted! You may upvote to remove your downvote.");  
+               alert("You have already downvoted! You may upvote to remove your downvote.");  
             }
             return true;
         }
         alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
         return false;// prevent the button from reloading the page
-    }
-});
+    
+}

@@ -1,42 +1,49 @@
-Meteor.publish('websites', function () {
-    return Websites.find();
-});
+// code that is shared between client and server, i.e. sent to both
 
-Meteor.publish('comments', function () {
-    return Comments.find();
-});
-
+// method definitions
 Meteor.methods({
-    // fetch site title and description
-    getSiteInfo: function (url) {
-        this.unblock();
-        var siteContent = HTTP.call("GET", url).content;
-        var siteDOM = cheerio.load(siteContent);
-        var title = siteDOM('title').text();
-        var description = siteDOM('meta[name=description]').attr("content");
-        return {title: title, description: description};
-    },
+    // posting new website
     'insertWebsiteData': function(url, title, description){
-        Websites.insert({
+        var new_website;
+        if (!this.userId) {// not logged in
+            return;
+        }
+        else {
+            new_website = {
                 title:title,
                 url:url, 
     		    description:description, 
                 createdOn:new Date(),
-                createdBy:Meteor.user()._id,
+                createdBy:this.userId,
                 upvote:0,
                 downvote:0,
                 upvoters: [],
                 downvoters: []
-            });
+            };
+            var id = Websites.insert(new_website);
+            console.log("insertWebsiteData method: got an id "+id);
+            return id;
+        }
     },
-    'insertCommentsData': function(comment, site){
-        Comments.insert({
+    
+    // posting new comment
+    'insertCommentsData': function(comment, siteid){
+        var new_comment;
+        console.log("addComment method running!");
+        if (this.userId){// we have a user
+            new_comment = {
                 comment: comment,
-                site: site,
+                siteid: siteid,
                 createdOn: new Date(),
                 createdBy:Meteor.user()._id
-            });
+            };
+            var id = Comments.insert(new_comment);
+            console.log("insertCommentsData method: got an id "+id);
+            return id;
+        }
+        return;
     },
+    
     'updateWebsiteDataup1': function(website_id, upvote, upvoters){
         Websites.update(website_id,
                         {$inc: {upvote: 1}, $push: {upvoters: Meteor.user()._id} }
@@ -59,3 +66,6 @@ Meteor.methods({
     }
     
 });
+
+
+
