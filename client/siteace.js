@@ -90,11 +90,15 @@ Template.website_list.helpers({
 Template.website_item.events({
     "click .js-upvote":function(event){
         website = Websites.findOne({_id:this._id});
-        upvote(website);
+        Meteor.call('upvote', website, function (err, result) {
+            if(err) return console.log('Upvoting failed!');
+        });
     },
     "click .js-downvote":function(event){
         website = Websites.findOne({_id:this._id});
-        downvote(website);
+        Meteor.call('downvote', website, function (err, result) {
+            if(err) return console.log('Downvoting failed!');
+        });
     }
 });
 
@@ -121,7 +125,9 @@ Template.website_form.events({
         var description = event.target.description.value;
         
         if (Meteor.user()){ //user is logged in
-            Meteor.call('insertWebsiteData', url, title, description);
+            Meteor.call('insertWebsiteData', url, title, description, function (err, result) {
+                if(err) return console.log('insert new Website failed!');
+            });
         }
         else { //user not logged in
             alert("Users can post new websites only if they are logged in. Kindly sign in or register!");
@@ -148,58 +154,16 @@ Template.site_detail.events({
     },
     "click .js-upvote":function(event){
         website = Websites.findOne({_id:this._id});
-        upvote(website);
+        Meteor.call('upvote', website, function (err, result) {
+            if(err) return console.log('Upvoting failed!');
+        });
     },
     
     "click .js-downvote":function(event){
         website = Websites.findOne({_id:this._id});
-        downvote(website);
+        Meteor.call('downvote', website, function (err, result) {
+            if(err) return console.log('Downvoting failed!');
+        });
     }
 });
 // end /template events
-
-function upvote(website) {
-    var website_id = website._id;
-        var upvote = website.upvote;
-        var upvoters = website.upvoters;
-        var downvote = website.downvote;
-        var downvoters = website.downvoters;
-        if(Meteor.user()){
-            if(upvoters==null || upvoters.indexOf(Meteor.user()._id) === -1){
-                Meteor.call('updateWebsiteDataup1', website_id, upvote, upvoters);
-                if(downvoters!==null && !(downvoters.indexOf(Meteor.user()._id) === -1)){
-                    Meteor.call('updateWebsiteDataup2', website_id, downvote, downvoters);
-                }
-            }
-            else {
-                alert("You have already upvoted! You may downvote to remove your upvote.");  
-            }
-            return true;
-        }
-        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
-        return false;// prevent the button from reloading the page
-    
-}
-
-function downvote(website) {
-   var website_id = website._id;
-        var upvote = website.upvote;
-        var upvoters = website.upvoters;
-        var downvote = website.downvote;
-        var downvoters = website.downvoters;
-        if(Meteor.user()){
-            if(downvoters==null || downvoters.indexOf(Meteor.user()._id) === -1){
-                Meteor.call('updateWebsiteDataup3', website_id, downvote, downvoters);
-                if(upvoters!==null && !(upvoters.indexOf(Meteor.user()._id) === -1)){
-                    Meteor.call('updateWebsiteDataup4', website_id, upvote, upvoters);
-                }
-            }
-            else {
-               alert("You have already downvoted! You may upvote to remove your downvote.");  
-            }
-            return true;
-        }
-        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
-        return false;// prevent the button from reloading the page
-    
-}

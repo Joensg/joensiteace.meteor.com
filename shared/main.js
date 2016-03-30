@@ -44,27 +44,59 @@ Meteor.methods({
         return;
     },
     
-    'updateWebsiteDataup1': function(website_id, upvote, upvoters){
-        Websites.update(website_id,
+    // upvoting
+    'upvote': function(website) {
+        var website_id = website._id;
+        var upvote = website.upvote;
+        var upvoters = website.upvoters;
+        var downvote = website.downvote;
+        var downvoters = website.downvoters;
+        if(Meteor.user()){
+            if(upvoters==null || upvoters.indexOf(Meteor.user()._id) === -1){
+                Websites.update(website_id,
                         {$inc: {upvote: 1}, $push: {upvoters: Meteor.user()._id} }
                        );
-    },
-    'updateWebsiteDataup2': function(website_id, downvote, downvoters){
-        Websites.update(website_id,
+                if(downvoters!==null && !(downvoters.indexOf(Meteor.user()._id) === -1)){
+                    Websites.update(website_id,
                         {$inc: {downvote: -1}, $pop: {downvoters: Meteor.user()._id} }
                        );
+                }
+            }
+            else {
+                alert("You have already upvoted! You may downvote to remove your upvote.");  
+            }
+            return true;
+        }
+        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
+        return false;// prevent the button from reloading the page
     },
-    'updateWebsiteDataup3': function(website_id, downvote, downvoters){
-        Websites.update(website_id,
+    
+    // downvoting
+    'downvote': function(website) {
+        var website_id = website._id;
+        var upvote = website.upvote;
+        var upvoters = website.upvoters;
+        var downvote = website.downvote;
+        var downvoters = website.downvoters;
+        if(Meteor.user()){
+            if(downvoters==null || downvoters.indexOf(Meteor.user()._id) === -1){
+                Websites.update(website_id,
                         {$inc: {downvote: 1}, $push: {downvoters: Meteor.user()._id} }
                        );
-    },
-    'updateWebsiteDataup4': function(website_id, upvote, upvoters){
-        Websites.update(website_id,
+                if(upvoters!==null && !(upvoters.indexOf(Meteor.user()._id) === -1)){
+                    Websites.update(website_id,
                         {$inc: {upvote: -1}, $pop: {upvoters: Meteor.user()._id} }
                        );
-    }
-    
+                }
+            }
+            else {
+               alert("You have already downvoted! You may upvote to remove your downvote.");  
+            }
+            return true;
+        }
+        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
+        return false;// prevent the button from reloading the page
+    }  
 });
 
 
