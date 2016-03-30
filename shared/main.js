@@ -63,11 +63,15 @@ Meteor.methods({
                 }
             }
             else {
-                alert("You have already upvoted! You may downvote to remove your upvote.");  
+                if (Meteor.isClient) {
+                    alert("You have already upvoted! You may downvote to remove your upvote.");
+                }
             }
             return true;
         }
-        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
+        if (Meteor.isClient) {
+            alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
+        }
         return false;// prevent the button from reloading the page
     },
     
@@ -90,11 +94,15 @@ Meteor.methods({
                 }
             }
             else {
-               alert("You have already downvoted! You may upvote to remove your downvote.");  
+                if (Meteor.isClient) {
+                    alert("You have already downvoted! You may upvote to remove your downvote.");
+                }
             }
             return true;
         }
-        alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
+        if (Meteor.isClient) {
+            alert("Users can vote only if they are logged in. Kindly sign in or register to vote!");
+        }
         return false;// prevent the button from reloading the page
     }  
 });
